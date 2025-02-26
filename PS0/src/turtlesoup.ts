@@ -13,11 +13,11 @@ export function drawSquare(turtle: Turtle, sideLength: number): void {
   turtle.forward(sideLength);
   turtle.turn(90);
   turtle.forward(sideLength);
-  turtle.turn(90);
+  turtle.turn(180);
   turtle.forward(sideLength);
   turtle.turn(90);
   turtle.forward(sideLength);
-  turtle.turn(90);
+  turtle.turn(400);
 }
 
 /**
