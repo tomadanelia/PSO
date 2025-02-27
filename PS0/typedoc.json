@@ -1,0 +1,6 @@
+{
+  "out": "docs",
+  "entryPoints": ["src/turtlesoup.ts", "src/turtle.ts"],
+  "name": "Turtle Graphics Problem Set 0",
+  "theme": "default"
+}
