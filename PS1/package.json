@@ -1,0 +1,26 @@
+{
+  "name": "ps1-flashcards",
+  "version": "1.0.0",
+  "description": "Problem Set 1 for 6.102",
+  "scripts": {
+    "test": "mocha test/**/*.ts",
+    "coverage": "c8 npm test",
+    "coverage-report": "c8 report -r html",
+    "build": "tsc",
+    "start": "npm run build && node main.js",
+    "docs": "typedoc"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.17",
+    "c8": "^9.1.0",
+    "chai": "^4.4.1",
+    "mocha": "^10.3.0",
+    "ts-node": "^10.9.2",
+    "typedoc": "^0.27.9",
+    "typescript": "^5.3.3"
+  }
+}

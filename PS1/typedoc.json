@@ -1,0 +1,6 @@
+{
+  "out": "docs",
+  "entryPoints": ["src/flashcards.ts", "src/utils.ts", "src/algorithm.ts"],
+  "name": "Flashcards Problem Set 1",
+  "theme": "default"
+}
