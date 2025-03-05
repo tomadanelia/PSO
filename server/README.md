@@ -4,138 +4,107 @@
 
 Create a new folder and move into the directory:
 
-```bash
+```bat
 mkdir server
 cd server
 ```
 
 Initialize it as an npm project:
 
-```bash
-npm init
+```bat
+npm init -y
 ```
 
 ## Step 2 — Configuring the TypeScript Compiler
 
-Install TypeScript as a development dependency:
-
-```bash
-npm install --save-dev typescript
-```
-
-Create a tsconfig.json file in the project root:
+Create a `tsconfig.json` file in the project root:
 
 Paste the following configuration:
 
-```bash
+```json
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Node",
+    "target": "es2022",
+    "module": "commonjs",
     "strict": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "isolatedModules": true,
-    "resolveJsonModule": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "noEmit": true,
-    "types": ["node"],
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "incremental": true
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "out",
+    "rootDir": "src",
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules"]
 }
 ```
 
-Key Configurations:
-
-- allowImportingTsExtensions: Ensures .ts extensions are required in imports.
-- verbatimModuleSyntax: This avoids altering your import/export syntax. By using --experimental-strip-types, you can bypass tools like Babel, SWC, Webpack, or TSX, streamlining your toolchain significantly.
-
 ## Step 3 — Creating a Minimal TypeScript Express Server
 
-Install Express and its TypeScript types:
+Install Express, nodemon and TypeScript types:
 
 ```bash
-npm install --save express
-npm install --save-dev @types/express
+npm install express
+npm install --save-dev typescript nodemon @types/express @types/node
 ```
 
-Create a `src` folder and a TypeScript file and add the following code:
+Create a `src` folder and a `app.ts` TypeScript file and add the following code:
 
-```bash
-import express from 'express';
-const app = express();
-const port = 3001;
+```typescript
+import express, { Express, Request, Response } from "express";
 
-app.get('/', (req, res) => {
-res.send('Hello World!');
+const app: Express = express();
+const port = 8000;
+
+app.get("/", (req: Request, res: Response) => {
+  res.send("Hello, World!");
 });
 
 app.listen(port, () => {
-console.log(`Express is listening at http://localhost:${port}`);
+  console.log(`Server listening at http://localhost:${port}`);
 });
 ```
-
-Compile the TypeScript to JavaScript:
-
-```
-npx tsc
-```
-
-Run the compiled JavaScript:
-
-```
-node dist/app.js
-```
-
-You should see:
-
-```
-Express is listening at http://localhost:3001
-```
-
-Visiting http://localhost:3001 in a browser should display "Hello World!".
 
 ## Step 4 — Updating the package.json File
 
 Edit package.json to add npm scripts:
 
-```bash
+```json
 {
-"name": "node_project",
-"version": "1.0.0",
-"main": "dist/app.js",
-"scripts": {
-"start": "tsc && node dist/app.js",
-"start:dev": "node --watch index.ts",
-"test": "echo \"Error: no test specified\" && exit 1"
-},
-"devDependencies": {
-"@types/express": "^4.17.1",
-"@typescript-eslint/eslint-plugin": "^5.4.0",
-"@typescript-eslint/parser": "^5.4.0",
-"eslint": "^8.3.0",
-"typescript": "^4.5.2"
-},
-"dependencies": {
-"express": "^4.17.1"
+  "name": "minimal-express-server",
+  "version": "1.0.0",
+  "description": "Minimal Express TypeScript Server",
+  "main": "app.ts",
+  "scripts": {
+    "start": "nodemon src/app.ts",
+    "build": "tsc"
+  },
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.17",
+    "nodemon": "^3.1.9",
+    "typescript": "^5.3.3"
+  }
 }
-}
 ```
 
-start: Compiles TypeScript and runs the app using Node.js
+start project using:
 
-You can run these commands using:
-
-```
-npm run start
+```bat
+npm start
 ```
 
+You should see:
+
+```
+Express is listening at http://localhost:8000
+```
+
+Visiting http://localhost:8000 in a browser should display "Hello World!".
 You now have a Node.js project set up with TypeScript. Enjoy developing!
