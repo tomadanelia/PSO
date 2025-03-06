@@ -108,3 +108,8 @@ Express is listening at http://localhost:8000
 
 Visiting http://localhost:8000 in a browser should display "Hello World!".
 You now have a Node.js project set up with TypeScript. Enjoy developing!
+
+## Step 5 — Updating the package.json File
+
+your next target is to add a new route to the server which will serve the output.html file from the PS0 folder.
+Try to do it yourself.
