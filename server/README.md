@@ -46,7 +46,7 @@ Install Express, nodemon and TypeScript types:
 
 ```bash
 npm install express
-npm install --save-dev typescript nodemon @types/express @types/node
+npm install --save-dev typescript nodemon ts-node @types/express @types/node
 ```
 
 Create a `src` folder and a `app.ts` TypeScript file and add the following code:
@@ -68,7 +68,7 @@ app.listen(port, () => {
 
 ## Step 4 — Updating the package.json File
 
-Edit package.json to add npm scripts:
+Edit package.json to add npm start script:
 
 ```json
 {
@@ -77,7 +77,7 @@ Edit package.json to add npm scripts:
   "description": "Minimal Express TypeScript Server",
   "main": "app.ts",
   "scripts": {
-    "start": "nodemon src/app.ts",
+    "start": "nodemon src/app.ts", // only this is added
     "build": "tsc"
   },
   "author": "Your Name",
