@@ -19,9 +19,16 @@ import { Flashcard, AnswerDifficulty, BucketMap } from "./flashcards";
  * @spec.requires buckets is a valid representation of flashcard buckets.
  */
 export function toBucketSets(buckets: BucketMap): Array<Set<Flashcard>> {
-  if (buckets.size === 0) return [];  // Handle the empty map case explicitly
+  if (buckets.size === 0) return []; // Handle the empty map case explicitly
 
-  const maxBucket = buckets.size > 0 ? Math.max(...buckets.keys()) : 0;
+  // Check that all keys (bucket numbers) are non-negative integers
+  for (const key of buckets.keys()) {
+    if (!Number.isInteger(key) || key < 0) {
+      throw new Error(`Invalid bucket number: ${key}. All bucket numbers must be non-negative integers.`);
+    }
+  }
+
+  const maxBucket = Math.max(...buckets.keys());
 
   // Ensure all indices contain valid Sets
   const bucketArray: Array<Set<Flashcard>> = Array.from(
@@ -51,7 +58,7 @@ export function getBucketRange(
   let maxBucket: number | undefined = undefined;
 
   for (let i = 0; i < buckets.length; i++) {
-    const bucket = buckets[i] ?? new Set<Flashcard>(); // Ensure it's never undefined
+    const bucket = buckets[i] ?? new Set<Flashcard>(); 
 
     if (bucket.size > 0) {
       if (minBucket === undefined) minBucket = i;
@@ -59,11 +66,16 @@ export function getBucketRange(
     }
   }
 
-  return minBucket !== undefined && maxBucket !== undefined
-    ? { minBucket, maxBucket }
-    : undefined;
-}
+  if (minBucket === undefined || maxBucket === undefined) return undefined;
 
+  for (let i = minBucket; i <= maxBucket; i++) {
+    if ((buckets[i] ?? new Set<Flashcard>()).size === 0) {
+      return undefined; 
+    }
+  }
+
+  return { minBucket, maxBucket };
+}
 /**
  * Selects cards to practice on a particular day.
  *
@@ -73,25 +85,31 @@ export function getBucketRange(
  *          according to the Modified-Leitner algorithm.
  * @spec.requires buckets is a valid Array-of-Set representation of flashcard buckets.
  */
-export function practice(
-  buckets: Array<Set<Flashcard>>,
-  day: number
-): Set<Flashcard> {
-  const cardsToPractice = new Set<Flashcard>();
+export function practice(buckets: Array<Set<Flashcard>>, day: number): Set<Flashcard> {
+  const reviewCards = new Set<Flashcard>();
 
-  // The Modified-Leitner System - you can adjust the logic if needed.
-  // Cards from lower buckets (i.e., more review-needed) are prioritized.
-  for (let i = 0; i < buckets.length; i++) {
-    const bucket = buckets[i];
-
-    // Ensure bucket is defined and has cards to practice.
-    if (bucket && i === day) {
-      bucket.forEach(card => cardsToPractice.add(card));
+  // Always review bucket 0
+  if (buckets[0]) {
+    for (const flashcard of buckets[0]) {
+      reviewCards.add(flashcard);
     }
   }
 
-  return cardsToPractice;
+  // Review other buckets on spaced days
+  for (let i = 1; i < buckets.length; i++) {
+    const repeatInterval = Math.pow(2, i);
+    const currentBucket = buckets[i];
+
+    if (currentBucket && day % repeatInterval === 0) {
+      for (const flashcard of currentBucket) {
+        reviewCards.add(flashcard);
+      }
+    }
+  }
+
+  return reviewCards;
 }
+
 
 /**
  * Updates a card's bucket number after a practice trial.
@@ -110,6 +128,7 @@ export function update(
   const newBuckets = new Map(buckets);
   let currentBucket = 0;
 
+  // Find and remove the card from its current bucket
   for (const [bucket, cards] of newBuckets.entries()) {
     if (cards.has(card)) {
       cards.delete(card);
@@ -118,28 +137,37 @@ export function update(
     }
   }
 
-  const newBucket = Math.max(
-    0,
-    difficulty === AnswerDifficulty.Wrong
-      ? 0
-      : currentBucket + (difficulty === AnswerDifficulty.Easy ? 2 : 1)
-  );
+  // Calculate new bucket based on difficulty
+  let newBucket = 0;
+  if (difficulty === AnswerDifficulty.Hard) {
+    newBucket = currentBucket + 1;
+  } else if (difficulty === AnswerDifficulty.Easy) {
+    newBucket = currentBucket + 2;
+  }
 
+  // Add card to the new bucket
   if (!newBuckets.has(newBucket)) {
     newBuckets.set(newBucket, new Set());
   }
-  newBuckets.get(newBucket)!.add(card);
 
+  newBuckets.get(newBucket)!.add(card);
   return newBuckets;
 }
+
 
 /**
  * Generates a hint for a flashcard.
  *
+ * In language learning, hints may include part of speech or synonyms.
+ * In science, hints may include definitions, formulas, or related terms.
+ * In history, hints may include timelines or significant keywords.
+ *
  * @param card flashcard to hint
- * @returns a hint for the front of the flashcard.
- * @spec.requires card is a valid Flashcard.
+ * @returns a hint that helps recall the answer side of the flashcard.
+ * @spec.requires card is a valid Flashcard with non-empty front, back, and hint.
+ * @spec.effects does not modify the input flashcard.
  */
+
 export function getHint(card: Flashcard): string {
   if (!card.front || !card.back || !card.hint) {
     throw new Error("Invalid flashcard: front, back, and hint must be non-empty.");
@@ -149,27 +177,42 @@ export function getHint(card: Flashcard): string {
 /**
  * Computes statistics about the user's learning progress.
  *
- * @param buckets representation of learning buckets.
- * @param history representation of user's answer history.
- * @returns statistics about learning progress.
- * @spec.requires [SPEC TO BE DEFINED]
+ * @param buckets - Array-of-Set representation of learning buckets.
+ * @param history - User's answer history (can be extended to track performance over time).
+ * @returns an object containing:
+ *   - totalCards: total number of flashcards across all buckets,
+ *   - masteredCards: number of cards in the highest bucket,
+ *   - bucketCounts: number of cards per bucket index.
+ *
+ * @spec.requires buckets is a non-null, defined array of Sets of Flashcards.
+ * @spec.effects does not mutate the input buckets or history.
+ * @spec.ensures returns an object with non-negative integer statistics.
  */
-export function computeProgress(buckets: Array<Set<Flashcard>>, history: any): any {
+export function computeProgress(
+  buckets: Array<Set<Flashcard>>,
+  history: any // can be refined to a structured type later
+): {
+  totalCards: number;
+  masteredCards: number;
+  bucketCounts: number[];
+} {
+  if (!Array.isArray(buckets)) {
+    throw new Error("Buckets must be a defined array.");
+  }
+
   const progress = {
     totalCards: 0,
     masteredCards: 0,
     bucketCounts: [] as number[],
   };
 
-  // Loop through each bucket to gather statistics.
   buckets.forEach((bucket, index) => {
-    const bucketSize = bucket.size;
-    progress.bucketCounts[index] = bucketSize;
-    progress.totalCards += bucketSize;
+    const size = bucket?.size ?? 0;
+    progress.bucketCounts[index] = size;
+    progress.totalCards += size;
 
-    // If this is the highest bucket, count the cards as mastered.
     if (index === buckets.length - 1) {
-      progress.masteredCards = bucketSize;
+      progress.masteredCards = size;
     }
   });
 
